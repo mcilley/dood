@@ -1,0 +1,35 @@
+version: '2'
+services:
+    nginx:
+        image: nginx:latest
+        restart: unless-stopped
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+            - ./ssl/jenkins.cer:/etc/nginx/ssl/jenkins.cer
+            - ./ssl/jenkins.key:/etc/nginx/ssl/jenkins.key
+        command: /bin/bash -c "nginx -g 'daemon off;'"
+        links:
+            - master
+    master:
+        image: jenkins/jenkins:2.204.6
+        restart: unless-stopped
+        volumes:
+            - ./master/JENKINS_HOME:/var/jenkins_home
+        expose:
+            - "8080"
+            - "50000"
+        environment:
+            - "JAVA_OPTS=-Xmx10000m"
+
+    logzio:
+        image: logzio/docker-collector-logs
+        restart: unless-stopped
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - /var/lib/docker/containers:/var/lib/docker/containers
+        environment:
+            - "LOGZIO_TOKEN=butts"
+
